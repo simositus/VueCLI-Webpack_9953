@@ -1,250 +1,247 @@
 <template>
-  <v-main class="list">
-      <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
-    <h3 class="text-h3 font-weight-medium mb-5">To Do List UGD</h3>
-    <v-card>
-      <v-card-title>
-        <v-text-field
-          v-model="search"
-          append-icon="mdi-magnify"
-          label="Search"
-          hide-details
-        ></v-text-field>
-        <v-spacer></v-spacer>
-        <v-btn color="success" dark @click="dialog = true"> 
-            Tambah 
-        </v-btn>
-        </v-card-title>
-        <v-data-table
-            :headers="headers"
-            :items="filteredItems"
-            :search="search"
+    <v-main class="list">
+        <h3 class="text-h3 font-weight-medium mb-5">To Do List UGD</h3>
+        <link href="https://fonts.googleapis.com/css?family=Material+Icons" rel="stylesheet">
+  
+        <v-card>
+            <v-card-title>
+                <v-text-field
+                    v-model="search"
+                    append-icon="mdi-magnify"
+                    label="Search"
+                    single-line
+                    hide-details
+                ></v-text-field>
+                <v-spacer></v-spacer>
+                <v-btn color="warning" dark @click="dialogSelesai = true" style="margin: 1vh;">
+                    TODO SELESAI
+                </v-btn>
+                <v-btn color="success" dark @click="dialog = true"  style="margin: 1vh;">
+                    Tambah
+                </v-btn>
+            </v-card-title>
             
-        >
-        <template v-slot:[`item.priority`]="{ item }">
-          <v-chip :color="getColor(item.priority)" label outlined dark>
-            {{ item.priority }}
-          </v-chip>
-        </template>
+            <v-data-table 
+              :headers="headers" 
+              :items="todos" 
+              :search="search">
+                <template v-slot:[`item.priority`]="{ item }">
+                  <v-chip v-if="item.priority == 'Penting'"
+                      class="ma-2"
+                      color="red"
+                      label
+                      outlined>
+                      {{ item.priority }}
+                  </v-chip>
+                  <v-chip v-else-if="item.priority == 'Biasa'"
+                      class="ma-2"
+                      color="blue"
+                      label
+                      outlined>
+                      {{ item.priority }}
+                  </v-chip>
+                  <v-chip v-else
+                      class="ma-2"
+                      color="green"
+                      label
+                      outlined>
+                      {{ item.priority }}
+                  </v-chip>
+              </template>
 
-        <template v-slot:[`item.actions`]="{ item }">
-          <v-icon
-            small
-            class="mr-2 blue--text"
-            @click="dialogEdit = true;
-            itemContent = item;
-            fillField();"
-          >
-            {{ index }}edit
-          </v-icon>
-          <v-icon
-            small
-            class="mr-2 red--text"
-            @click="dialogDelete = true;
-            indexItem = todos.indexOf(item);"
-          >
-            delete
-          </v-icon>
-        </template>
+            <template v-slot:[`item.actions`]="{ item }">
+                <v-icon small class="mr-2 blue--text" 
+                @click="editItem(item)">
+                        edit
+                </v-icon>
+                <v-icon small class="red--text" 
+                @click="deleteItem(item)">
+                    delete
+                </v-icon>
+            </template>
+            </v-data-table>
+        </v-card>
 
-        <v-textarea
-            v-model="formTodo.note"
-            label="Note"
-            required
-        ></v-textarea>
-      </v-data-table>
-    </v-card>
-    <v-dialog v-model="dialog" persistent max-width="600px">
-      <v-card>
-        <v-card-title>
-          <span class="headline">Form Todo</span>
-        </v-card-title>
-        <v-card-text>
-          <v-container>
-            <v-text-field
-              v-model="formTodo.task"
-              label="Task"
-              required
-            ></v-text-field>
-            <v-select
-              v-model="formTodo.priority"
-              :items="['Penting', 'Biasa', 'Tidak penting']"
-              label="Priority"
-              required
-            ></v-select>
-            <v-textarea
-              v-model="formTodo.note"
-              label="Note"
-              required
-            ></v-textarea>
-          </v-container>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="cancel"> Cancel </v-btn>
-          <v-btn color="blue darken-1" text @click="save"> Save </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+        <v-dialog v-model="dialog" persistent max-width="600px">
+            <v-card>
+                <v-card-title>
+                    <span class="headline">Form Todo</span>
+                </v-card-title>
+                <v-card-text>
+                    <v-container>
+                        <v-text-field
+                            v-model="formTodo.task"
+                            label="Task"
+                            required
+                        ></v-text-field>
 
-    <v-dialog v-model="dialogEdit" persistent max-width="600px">
-      <v-card>
-        <v-card-title>
-          <span class="headline">Form Todo</span>
-        </v-card-title>
-        <v-card-text>
-          <v-container>
-            <v-text-field
-              v-model="formTodoEdit.task"
-              label="Task"
-              required
-              :value="itemContent.task"
-            ></v-text-field>
-            <v-select
-              v-model="formTodoEdit.priority"
-              :items="['Penting', 'Biasa', 'Tidak penting']"
-              label="Priority"
-              required
-            ></v-select>
-            <v-textarea v-model="formTodoEdit.note" label="Note" required>{{
-              itemContent.note
-            }}</v-textarea>
-          </v-container>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="blue darken-1" text @click="cancelEdit"> Cancel </v-btn>
-          <v-btn color="blue darken-1" text @click="saveEdit"> Save </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+                        <v-select
+                            v-model="formTodo.priority"
+                            :items="['Penting', 'Biasa', 'Tidak penting']"
+                            label="Priority"
+                            required
+                        ></v-select>
 
-    <v-dialog v-model="dialogDelete" persistent max-width="400px">
-      <v-card>
-        <v-card-title>
-          <span class="headline"><b>Yakin menghapus?</b></span>
-        </v-card-title>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="green darken-1" text @click="cancelDelete">
-            TIDAK
-          </v-btn>
-          <v-btn color="red darken-1" text @click="deleteItem(indexItem)">
-            YA
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </v-main>
+                        <v-textarea
+                            v-model="formTodo.note"
+                            label="Note"
+                            required
+                        ></v-textarea>
+                    </v-container>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="blue darken-1" text @click="cancel">
+                        Cancel
+                    </v-btn>
+                    <v-btn color="blue darken-1" text @click="save">
+                        Save
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <v-dialog v-model="dialogSelesai" persistent max-width="600px">
+            <v-data-table :headers="headersSelesai" :items="todosSelesai" :search="search">
+                 <template v-slot:[`item.priority`]="{ item }">
+                    <v-chip v-if="item.priority == 'Penting'"
+                        class="ma-2"
+                        color="red"
+                        label
+                        outlined>
+                        {{ item.priority }}
+                    </v-chip>
+                    <v-chip v-else-if="item.priority == 'Biasa'"
+                        class="ma-2"
+                        color="blue"
+                        label
+                        outlined>
+                        {{ item.priority }}
+                    </v-chip>
+                    <v-chip v-else
+                        class="ma-2"
+                        color="green"
+                        label
+                        outlined>
+                        {{ item.priority }}
+                    </v-chip>
+                </template>
+            </v-data-table>
+
+            <v-card>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="blue darken-1" text @click="close">
+                        Close
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+    </v-main>
 </template>
 <script>
-
 export default {
-  name: "List",
-  data() {
-    return {
-      search: null,
-      dialog: false,
-      dialogDelete: false,
-      dialogEdit: false,
-      itemContent: [],
-      headers: [
-        {
-          text: "Task",
-          align: "start",
-          sortable: true,
-          value: "task",
+    name: "List",
+    data() {
+        return {
+            search: null,
+            dialog: false,
+            dialogDelete: false,
+            dialogSelesai: false,
+            headers: [
+                {
+                    text: "Task",
+                    align: "start",
+                    sortable: true,
+                    value: "task",
+                },
+                { text: "Priority", value: "priority" },
+                { text: "Note", value: "note" },
+                { text: "Actions", value: "actions" },
+            ],
+            headersSelesai: [
+                {
+                    text: "Task",
+                    align: "start",
+                    sortable: true,
+                    value: "task",
+                },
+                { text: "Priority", value: "priority" },
+                { text: "Note", value: "note" },
+            ],
+            todos: [
+                {
+                    task: "bernafas",
+                    priority: "Penting",
+                    note: "huffttt",
+                },
+                {
+                    task: "nongkrong",
+                    priority: "Tidak penting",
+                    note: "bersama tman2",
+                },
+                {
+                    task: "masak",
+                    priority: "Biasa",
+                    note: "masak air 500ml",
+                },
+            ],
+            formTodo: {
+                task: null,
+                priority: null,
+                note: null,
+            },
+            todosSelesai: [
+                
+            ],
+        };
+    },
+    methods: {
+        save() {
+            let i;
+            for(i = 0; i < this.todos.length; i++) {
+                if(this.todos[i].task==this.formTodo.task && this.todos[i].priority==this.formTodo.priority && this.todos[i].note==this.formTodo.note) {
+                    console.log("i: " + i);
+                    this.todos[i].task = this.formTodo.task;
+                    this.todos[i].priority = this.formTodo.priority;
+                    this.todos[i].note = this.formTodo.note;
+                    this.resetForm();
+                    this.dialog = false;
+                    return;
+                }
+            }
+            this.todos.push(this.formTodo);
+            this.resetForm();
+            this.dialog = false;
         },
-        { text: "Priority", value: "priority" },
-        { text: "Note", value: "note" },
-        { text: "Actions", value: "actions" },
-      ],
-      todos: [
-        {
-          task: "bernafas",
-          priority: "Penting",
-          note: "huffttt",
+        cancel() {
+            this.resetForm();
+            this.dialog = false;
         },
-        {
-          task: "nongkrong",
-          priority: "Tidak penting",
-          note: "bersama tman2",
+        cancelDelete() {
+            this.dialogDelete = false;
         },
-        {
-          task: "masak",
-          priority: "Biasa",
-          note: "masak air 500ml",
+        resetForm() {
+            this.formTodo = {
+                task: null,
+                priority: null,
+                note: null,
+            };
         },
-      ],
-      formTodo: {
-        task: null,
-        priority: null,
-        note: null,
-      },
-      formTodoEdit: {
-        task: null,
-        priority: null,
-        note: null,
-      },
-    };
-  },
-  methods: {
-    fillField() {
-      this.formTodoEdit.task = this.itemContent.task;
-      this.formTodoEdit.priority = this.itemContent.priority;
-      this.formTodoEdit.note = this.itemContent.note;
+        editItem(item) {
+            this.formTodo = item;
+            this.dialog = true;
+        },
+        deleteItem(item){
+            this.formTodo = item;
+            this.todosSelesai.push(this.formTodo);
+            this.todos.splice(this.todos.indexOf(item), 1);
+            this.dialogDelete = false;
+            this.resetForm();
+        },
+        close(){
+            this.dialogSelesai = false;
+        }
     },
-    save() {
-      this.todos.push(this.formTodo);
-      this.resetForm();
-      this.dialog = false;
-    },
-    saveEdit() {
-      this.itemContent.task = this.formTodoEdit.task;
-      this.itemContent.priority = this.formTodoEdit.priority;
-      this.itemContent.note = this.formTodoEdit.note;
-      this.resetForm();
-      this.dialogEdit = false;
-    },
-    cancel() {
-      this.resetForm();
-      this.dialog = false;
-    },
-    cancelEdit() {
-      this.resetForm();
-      this.dialogEdit = false;
-    },
-    cancelDelete() {
-      this.dialogDelete = false;
-    },
-    deleteItem(i) {
-      this.todos.splice(i, 1);
-      this.dialogDelete = false;
-    },
-    resetForm() {
-      this.formTodo = {
-        task: null,
-        priority: null,
-        note: null,
-      };
-      this.formTodoEdit = {
-        task: null,
-        priority: null,
-        note: null,
-      };
-    },
-    getColor(priority) {
-      if (priority == "Penting") return "red";
-      else if (priority == "Tidak penting") return "green";
-      else if (priority == "Biasa") return "blue";
-    },
-  },
-  computed: {
-    filteredItems() {
-      return this.todos.filter((i) => {
-      return !this.prioritySelect || i.priority === this.prioritySelect;
-      });
-    },
-  },
 };
 </script>
